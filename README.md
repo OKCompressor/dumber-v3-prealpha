@@ -122,3 +122,16 @@ This preview does not claim:
 - end-to-end parallel zRank results
 
 Those are separate measurements.
+
+## License
+
+DUMBer v3 pre-alpha is distributed under the **Luna Non-Commons License v1.1**
+(`LicenseRef-Luna-Non-Commons-1.1`).
+
+Human learning, research, modification, preservation, self-hosting and forking
+remain available under its terms.
+
+Commercial organizational use requires a separate commercial license or
+reciprocity agreement.
+
+See `LICENSE.md` and `docs/LICENSE.md`.

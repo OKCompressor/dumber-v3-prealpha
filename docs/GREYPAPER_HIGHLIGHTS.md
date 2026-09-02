@@ -157,7 +157,7 @@ regions produced:
 DU encode                4.46 s
 DU throughput          ~224.2 MB/s
 global mapping ready    11.54 s
-full measured trip      26.19 s
+reproduction harness wall      26.19 s
 exact restore            PASS
 
 representation chunks      188
@@ -177,3 +177,40 @@ Rare1 singleton projection identified:
 Thus vocabulary growth with corpus size strengthens the motivation for
 singleton pruning: a majority of lexical types can be excluded from the main
 contextual model while affecting only a small fraction of token positions.
+
+## Measurement semantics for the 1 GB run
+
+The 26.19 s number is the wall time of the complete reproducibility harness,
+not a codec decode measurement.
+
+The principal structural milestones are:
+
+```text
+parallel DU encode              4.46 s
+canonical DU mapping ready     11.54 s
+exact DU structural restore     7.72 s
+stats + R1 plan + fused scan    3.36 s
+measured stage sum             22.62 s
+reproduction harness wall      26.19 s
+```
+
+Peak memory during the harness was approximately 2.87 GiB, occurring in the
+parallel DU encode stage.
+
+### Vocabulary scaling
+
+```text
+enwik8:
+  global types       426,714
+  singleton types    234,696   55.00%
+  singleton tokens               0.599%
+
+enwik9:
+  global types     2,229,308
+  singleton types  1,380,346   61.92%
+  singleton tokens               0.343%
+```
+
+The larger corpus increases the share of lexical types excluded by singleton
+pruning while decreasing the fraction of token positions that take the
+exception path.

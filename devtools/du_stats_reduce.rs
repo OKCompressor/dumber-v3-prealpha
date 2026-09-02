@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LicenseRef-Luna-Non-Commons-1.1
 use std::{
     collections::BTreeMap,
     env,

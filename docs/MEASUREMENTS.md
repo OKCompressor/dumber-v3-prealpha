@@ -203,7 +203,7 @@ macro size=30 MiB
 | DU unigram stats | 1.07 s | 42.9 MiB |
 | R1 t1/words plan | 1.10 s | 209 MiB |
 | fused R1 scan | 1.19 s | 95.2 MiB |
-| **full measured trip** | **26.19 s** | **2,936 MiB peak** |
+| **reproduction harness wall** | **26.19 s** | **2,936 MiB peak** |
 
 Exactness:
 
@@ -254,3 +254,32 @@ diverting approximately 3.4 token positions per thousand.
 
 The full global-u24 corpus representation was deliberately not materialized.
 <!-- FINAL_ENWIK9_END -->
+
+## Timing semantics — enwik9 reproduction run
+
+The outer `/usr/bin/time -v` wrapped the complete reproduction script.
+
+It therefore measures more than structural encode or decode.
+
+| measurement | wall |
+|---|---:|
+| parallel DU encode | **4.46 s** |
+| merge dictionaries | 2.93 s |
+| build gmap24 | 4.15 s |
+| **global DU mapping ready** | **11.54 s** |
+| exact restore through local-u16 + gmap | **7.72 s** |
+| DU stats | 1.07 s |
+| R1 plan | 1.10 s |
+| fused R1 scan | 1.19 s |
+| **sum of explicitly measured stages** | **22.62 s** |
+| **complete reproduction-harness wall** | **26.19 s** |
+
+The approximately 3.57 s difference includes helper compilation and
+non-stage harness/reporting/file-management overhead.
+
+`restore_gmap = 7.72 s` is the measured structural text-restoration path.
+
+It is **not** entropy-codec decompression time.
+
+No claim should label 26.19 s as simply "decode", "restore", or
+"encode + decode".

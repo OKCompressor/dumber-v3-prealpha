@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: LicenseRef-Luna-Non-Commons-1.1
 set -euo pipefail
 
 REL="$(cd "$(dirname "$0")/.." && pwd)"

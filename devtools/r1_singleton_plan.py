@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: LicenseRef-Luna-Non-Commons-1.1
 import array
 import pathlib
 import struct
