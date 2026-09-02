@@ -360,3 +360,42 @@ These are Pareto points rather than a universal compressor-ranking claim.
 
 The current 10 GB result covers DUMBer canonicalization only; R1 and zRank are
 not part of this measurement.
+
+## Ganymede release boundary
+
+DUMBer v3 pre-alpha4 / Ganymede establishes a 10 GB exact-reversible
+canonical layer beyond u24:
+
+```text
+10 GB source
+ -> 1,828 local u16 representation chunks
+ -> 17,294,055 global DU identities
+ -> gmap32
+ -> 8,297,899,436-byte retained canonical bundle
+ -> exact restore PASS
+```
+
+Measured raw-to-canonical construction:
+
+```text
+DU encode           102.80 s
+merge                90.41 s
+gmap32                47.27 s
+                    --------
+total                240.48 s = 4:00.48
+```
+
+Linear 100 GB projection:
+
+```text
+40.08 minutes
+```
+
+This is an extrapolation only. SSD-backed bounded-input 10 GB/100 GB scaling
+and actual 100 GB limits remain to be measured.
+
+The 10 GB release result stops at DUMBer canonicalization. R1 and zRank were
+not run on this dataset.
+
+The next transform boundary is model/PLM token-space transduction, followed
+by widened-map R1/zRank integration and parallel entropy containers.

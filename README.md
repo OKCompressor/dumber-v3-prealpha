@@ -241,3 +241,26 @@ measured 100 GB result. SSD-backed bounded-input scaling remains to be tested.
 
 The 10 GB measurements cover DUMBer canonicalization, not the downstream R1
 or zRank stages.
+
+### What pre-alpha4 does — and does not — measure
+
+Ganymede's 10 GB result measures DUMBer canonicalization through gmap32 and
+exact structural restoration.
+
+It does **not** include R1 or zRank.
+
+```text
+10 GB raw -> canonical
+DU        102.80 s
+merge      90.41 s
+gmap32     47.27 s
+          --------
+          240.48 s = 4:00.48
+```
+
+A strictly linear projection is approximately **40.08 minutes per 100 GB**.
+That is not a measured 100 GB result; SSD-backed bounded-input scaling remains
+to be tested.
+
+See `docs/releases/PREALPHA4_GANYMEDE.md` for the full 10 GB size/time Pareto,
+scope boundary and downstream roadmap.
