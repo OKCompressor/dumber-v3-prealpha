@@ -1,0 +1,9 @@
+metric	files	bytes
+input	1	10000000000
+local_dicts	1828	1033808012
+local_u16	1828	7605565792
+merged_dict	1	214565572
+gmap32	1828	477768072
+structural_artifacts_total	5485	9331707448
+global_vocab	1	17294055
+representation_chunks	1	1828

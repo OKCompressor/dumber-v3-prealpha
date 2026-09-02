@@ -262,3 +262,43 @@ B. source release with the historical reference ELF clearly separated
 
 The current pre-alpha does not claim byte-reproducible source-to-ELF
 provenance.
+
+## Ganymede: measured u24 -> u32 crossover
+
+A 10 GB Wikipedia-derived prefix produced **17,294,055 canonical DU lexical
+types**, exceeding the 24-bit ID space by **516,839 types (3.08%)**.
+
+Ganymede therefore widens only the reconciliation layer:
+
+```text
+local token payload       u16
+local vocabulary          <= 65,536
+canonical map             u24 or u32
+compute/API identity      u32
+```
+
+The 10 GB run produced 1828 vocabulary-bounded local representation
+chunks and a 477768072-byte gmap32 layer.
+
+Exact restoration passed, with identical source/restored SHA256:
+
+```text
+4a11a5ab0740c29fc1097aeafe9691e021238be5a1c1a93ebb8a4e89d85c7b6c
+```
+
+## Canonical bundle versus build workspace
+
+At 10 GB, Ganymede's retained reversible representation is:
+
+```text
+local u16        7,605,565,792 B
+merged vocab       214,565,572 B
+gmap32              477,768,072 B
+                  ----------------
+canonical         8,297,899,436 B
+```
+
+This is **17.021% below the 10,000,000,000-byte source before entropy coding**.
+
+The additional 1,033,808,012 bytes of local dictionaries are construction
+state and can be discarded after the canonical map has been built.

@@ -62,7 +62,7 @@ index 1433de2..babd058 100644
              if args.len() != 5 {
                  print_usage();
 diff --git a/src/process.rs b/src/process.rs
-index b04717a..535a1a4 100644
+index b04717a..45ad842 100644
 --- a/src/process.rs
 +++ b/src/process.rs
 @@ -914,6 +914,69 @@ fn encode_u16_auto_str_to_dirs(
@@ -191,7 +191,7 @@ index b04717a..535a1a4 100644
              })
              .collect()
      });
-@@ -1373,3 +1451,184 @@ pub fn restore_global_u24(
+@@ -1373,3 +1451,206 @@ pub fn restore_global_u24(
      out_w.flush()?;
      Ok(())
  }
@@ -215,7 +215,29 @@ index b04717a..535a1a4 100644
 +) -> Result<()> {
 +    create_dir_all(gmap_dir)?;
 +
-+    let global = load_merged_dict_map(merged_dict_file)?;
++    // Ganymede: the historical load_merged_dict_map() is intentionally
++    // capped to the u24 namespace. For gmap32, load the canonical vocabulary
++    // without that u24 policy and move its Strings directly into a u32 map.
++    let global_toks = load_merged_dict_vec(merged_dict_file)?;
++
++    if global_toks.len() > u32::MAX as usize {
++        bail!(
++            "merged dict has {} tokens, exceeds supported u32 global space",
++            global_toks.len()
++        );
++    }
++
++    let global: std::collections::HashMap<String, u32> =
++        global_toks
++            .into_iter()
++            .enumerate()
++            .map(|(gid, tok)| (tok, gid as u32))
++            .collect();
++
++    redumb_log!(
++        "gmap32 canonical global vocabulary={}",
++        global.len()
++    );
 +
 +    let mut paths: Vec<PathBuf> = read_dir(chunked_dict_dir)?
 +        .filter_map(|e| e.ok().map(|e| e.path()))

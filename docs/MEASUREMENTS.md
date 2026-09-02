@@ -344,3 +344,65 @@ Europa bounded-memory benchmark.
 
 The run stopped deliberately before gmap serialization because the u24 guard
 detected the overflow.
+
+## Ganymede — 10 GB canonical u32 mapping
+
+The 10 GB Wikipedia prefix crossed the u24 canonical-identity ceiling.
+
+| metric | result |
+|---|---:|
+| input | 10,000,000,000 B |
+| global DU vocabulary | **17,294,055** |
+| u24 capacity | 16,777,216 |
+| excess over u24 | **516,839 / 3.08%** |
+| representation chunks | **1828** |
+| local dictionary bytes | **1033808012** |
+| local u16 payload bytes | **7605565792** |
+| merged dictionary bytes | **214565572** |
+| gmap32 bytes | **477768072** |
+| build gmap32 | **47.27 s** |
+| gmap32 peak RSS | **2,049,308 KiB** |
+| exact structural restore | **6:09.62** |
+| restore peak RSS | **1,178,196 KiB** |
+| exactness | **PASS** |
+
+The local payload remains u16. Ganymede widens only the canonical
+local-to-global reconciliation map when the global vocabulary exceeds u24.
+
+The restore benchmark ran from an external mechanical volume measured at
+approximately 95.5 MB/s sequential read throughput.
+
+SHA256 exactness:
+
+```text
+source:   4a11a5ab0740c29fc1097aeafe9691e021238be5a1c1a93ebb8a4e89d85c7b6c
+restored: 4a11a5ab0740c29fc1097aeafe9691e021238be5a1c1a93ebb8a4e89d85c7b6c
+```
+
+## Ganymede canonical restore bundle
+
+The complete working directory contains build intermediates that are not
+required after canonical reconciliation.
+
+Measured 10 GB accounting:
+
+```text
+raw source              10,000,000,000 B
+
+local u16                7,605,565,792 B
+merged dictionary          214,565,572 B
+gmap32                     477,768,072 B
+                         ----------------
+canonical restore bundle 8,297,899,436 B
+
+local dictionaries       1,033,808,012 B   build intermediate
+```
+
+Therefore the reversible canonical bundle is **17.021% smaller than the raw
+source before applying a general-purpose entropy codec**.
+
+`local_dicts/` is required to construct the canonical mapping but is not
+required by `restore-u16-gmap32` after `merged.dict` and `gmap32/` exist.
+
+The full working-artifact accounting of 9,331,707,448 bytes should therefore
+not be confused with the retained canonical representation.

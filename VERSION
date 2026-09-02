@@ -1,4 +1,8 @@
-DUMBer v3 pre-alpha3
-release-tag=dumber-v3-prealpha3
+DUMBer v3 pre-alpha4
+codename=Ganymede
+parent-planet=Jupiter
+inherits=Europa
+release-tag=dumber-v3-prealpha4
 format-status=experimental
-binary-status=measured-reference
+binary-status=behaviorally-validated
+binary-sha256=85aad7063a4d5361ff0f35d47b835de56c6ae0d988f2c6fb031a5c94b118ca9b

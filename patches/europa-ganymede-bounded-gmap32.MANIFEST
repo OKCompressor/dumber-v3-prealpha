@@ -1,4 +1,5 @@
 base_commit=75c89feb7090e0debc4413b0b242e93d9b35c955
-binary_sha256=650252950ba8baeeb7d4161febb01fbb939703abd2d1f013f4be8c73e664e9a1
-binary_buildid=5cf7b5f8969fc04c959c78c7324ab4eddae6db65
-generated=2026-09-02T23:46:33+02:00
+binary_sha256=85aad7063a4d5361ff0f35d47b835de56c6ae0d988f2c6fb031a5c94b118ca9b
+binary_buildid=066152f5b827532c756047fc510b127e4d6453a7
+generated=2026-09-02T23:50:11+02:00
+features=europa-bounded-input,ganymede-gmap32
