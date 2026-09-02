@@ -163,3 +163,31 @@ Commercial organizational use requires a separate commercial license or
 reciprocity agreement.
 
 See `LICENSE.md` and `docs/LICENSE.md`.
+
+## 10 GB Ganymede scale point
+
+A 10,000,000,000-byte Wikipedia-derived prefix crossed the u24 canonical
+identity limit.
+
+| metric | result |
+|---|---:|
+| raw input | 10,000,000,000 B |
+| local u16 payload | 7,605,565,792 B |
+| merged global dictionary | 214,565,572 B |
+| gmap32 | 477,768,072 B |
+| **canonical reversible bundle** | **8,297,899,436 B** |
+| **pre-entropy delta vs raw** | **-17.021%** |
+| global DU vocabulary | **17,294,055** |
+| representation chunks | 1,828 |
+| exact gmap32 restore | **PASS** |
+
+The 1,033,808,012 bytes of local dictionaries are construction state and are
+not required once the merged dictionary and canonical gmap32 layer exist.
+
+The local token streams remain u16. Only the local-to-global reconciliation
+map widens to u32.
+
+The measured 10 GB construction path used the historical whole-file front end
+for its initial DU pass, so its raw-to-canonical wall time is retained as a
+scale/conformance result rather than an Europa bounded-input performance
+claim.
