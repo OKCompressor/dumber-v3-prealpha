@@ -271,3 +271,57 @@ The structural stream provides a stable boundary at which model-specific
 transduction, R1, contextual zRank and future entropy transforms can operate
 without re-tokenizing the original corpus.
 
+
+## R1 evidence and 10 GB planning bound
+
+R1 and zRank were not executed on the 10 GB Ganymede corpus.
+
+Existing measured R1 evidence:
+
+| stage | enwik8 / 100 MB | enwik9 / 1 GB |
+|---|---:|---:|
+| DU global unigram statistics | 0.150 s | 1.07 s |
+| singleton/R1 planning | 0.330 s | 1.10 s |
+| fused R1 scan | — | 1.19 s |
+
+The 10 GB Ganymede local-u16 representation contains:
+
+```text
+local_u16_bytes=7,605,565,792
+token_positions=3,802,782,896
+global_vocabulary=17,294,055
+```
+
+Relative to enwik9:
+
+```text
+token-position scale = 9.436x
+global-vocab scale   = 7.758x
+```
+
+A simple extrapolation of the already-measured stages gives:
+
+```text
+DU stats             ~10.1 s
+R1 plan               ~8.5 s
+fused R1 scan        ~11.2 s
+                     -------
+compute model        ~29.9 s
+```
+
+These are planning estimates, not 10 GB benchmark results.
+
+On the external mechanical test volume, storage is expected to dominate:
+one sequential pass over the 7.606 GB local-u16 stream has a physical
+read-time floor of roughly 80 seconds at the previously measured
+~95.5 MB/s rate.
+
+A 10 GB R1 run therefore remains a small follow-up once the reducers accept
+gmap32. It does not require re-tokenizing the source.
+
+The current Python singleton planner is not the intended large-corpus
+implementation. A Rust planner is the next implementation target.
+
+No 10 GB zRank time is extrapolated here. Context-pair reduction and its
+working-set/storage behavior will be measured directly after widened-map R1
+integration.

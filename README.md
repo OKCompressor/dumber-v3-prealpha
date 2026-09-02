@@ -1,4 +1,4 @@
-# DUMBer v3 pre-alpha3
+# DUMBer v3 pre-alpha4 — Ganymede
 
 **Parallel reversible structural tokenization with bounded local vocabularies.**
 
@@ -83,8 +83,8 @@ rare-ones-mode=words
 
 ```text
 u16 = local structural storage
-u24 = compact serialized mapping
-u32 = hydrated compute/API/vector lane
+u24 = compact canonical mapping when global vocabulary fits 24 bits
+u32 = canonical mapping above the u24 limit + compute/API/vector lane
 ```
 
 A global-u24 corpus stream is not required.

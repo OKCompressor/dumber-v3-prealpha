@@ -399,3 +399,25 @@ not run on this dataset.
 
 The next transform boundary is model/PLM token-space transduction, followed
 by widened-map R1/zRank integration and parallel entropy containers.
+
+## Downstream cost is not yet part of the 10 GB claim
+
+The 10 GB Ganymede result stops at canonical DU.
+
+Existing 1 GB measurements show that the current downstream R1 analysis is
+small relative to canonical construction:
+
+```text
+DU global stats     1.07 s
+R1 planning         1.10 s
+fused R1 scan       1.19 s
+```
+
+The 10 GB local-u16 stream contains 3,802,782,896 token positions. Linear
+scaling of the measured compute stages suggests roughly 30 seconds of R1
+compute, but the external mechanical volume imposes an approximately
+80-second floor per sequential pass over the 7.606 GB local-u16 stream.
+
+This is a planning estimate only. R1 has not yet been benchmarked at 10 GB,
+and zRank is deliberately not extrapolated without a comparable measured
+baseline.
