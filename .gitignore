@@ -5,3 +5,8 @@
 /receipts/*.pid
 /receipts/LATEST_*
 /receipts/*-full-*/
+
+# Timestamped development laboratories; compact receipts are promoted separately.
+/receipts/source-conformance-20*/
+/receipts/bounded-input-enwik7-20*/
+/receipts/ganymede-enwik7-20*/

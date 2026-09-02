@@ -1,0 +1,25 @@
+DUMBer Europa bounded-input probe
+
+dataset=enwik9
+input_bytes=1000000000
+threads=16
+macro_mb=30
+
+old_reference:
+wall_s=4.46
+peak_rss_kb=3006740
+
+europa:
+wall_s=3.95
+peak_rss_kb=2774616
+representation_chunks=188
+dictionary_bytes=95280910
+local_u16_bytes=805981206
+
+enwik7_exact_restore=PASS
+
+Interpretation:
+The whole-file input String was removed from the parallel front end.
+The resulting implementation preserved tested structural artifacts and exact
+restoration. Most remaining peak RSS appears to belong to per-worker encoder
+state rather than whole-file retention.

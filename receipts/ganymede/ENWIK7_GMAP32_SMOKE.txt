@@ -1,0 +1,12 @@
+DUMBer Ganymede gmap32 smoke
+
+binary_sha256=650252950ba8baeeb7d4161febb01fbb939703abd2d1f013f4be8c73e664e9a1
+buildid=5cf7b5f8969fc04c959c78c7324ab4eddae6db65
+
+dataset=enwik7
+global_vocab=97970
+gmap32_restore_exact=PASS
+
+CLI:
+build-gmap32
+restore-u16-gmap32

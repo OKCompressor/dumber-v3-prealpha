@@ -1,0 +1,378 @@
+diff --git a/src/main.rs b/src/main.rs
+index 1433de2..babd058 100644
+--- a/src/main.rs
++++ b/src/main.rs
+@@ -12,7 +12,9 @@ fn print_usage() {
+     eprintln!("  redumb encode-u16-auto-nosdict-par <input_file> <dict_dir> <encoded_dir> [threads] [macro_mb]");
+     eprintln!("  redumb restore-u16 <dict_dir> <encoded_dir> <output_file>");
+     eprintln!("  redumb build-gmap24 <chunked_dict_dir> <merged_dict_file> <gmap_dir>");
++    eprintln!("  redumb build-gmap32 <chunked_dict_dir> <merged_dict_file> <gmap_dir>");
+     eprintln!("  redumb restore-u16-gmap24 <merged_dict_file> <gmap_dir> <encoded_u16_dir> <output_file>");
++    eprintln!("  redumb restore-u16-gmap32 <merged_dict_file> <gmap_dir> <encoded_u16_dir> <output_file>");
+     eprintln!("  redumb reindex-u16-gmap24-to-u24 <gmap_dir> <encoded_u16_dir> <global_u24_dir>");
+     eprintln!("  redumb restore-global-u24 <merged_dict_file> <global_u24_dir> <output_file>");
+     eprintln!("  redumb merge-dicts <chunked_dict_dir> <output_dict_file>");
+@@ -175,6 +177,22 @@ fn main() {
+             }
+         }
+ 
++        "build-gmap32" => {
++            if args.len() != 5 {
++                eprintln!(
++                    "Usage: redumb build-gmap32 <chunked_dict_dir> <merged_dict_file> <gmap_dir>"
++                );
++                std::process::exit(1);
++            }
++
++            if let Err(e) =
++                redumb::process::build_gmap32(&args[2], &args[3], &args[4])
++            {
++                eprintln!("Error during build-gmap32: {}", e);
++                std::process::exit(1);
++            }
++        }
++
+         "restore-u16-gmap24" => {
+             if args.len() != 6 {
+                 print_usage();
+@@ -188,6 +206,25 @@ fn main() {
+             }
+         }
+ 
++        "restore-u16-gmap32" => {
++            if args.len() != 6 {
++                eprintln!(
++                    "Usage: redumb restore-u16-gmap32 <merged_dict_file> <gmap_dir> <encoded_u16_dir> <output_file>"
++                );
++                std::process::exit(1);
++            }
++
++            if let Err(e) = redumb::process::restore_chunked_u16_gmap32(
++                &args[2],
++                &args[3],
++                &args[4],
++                &args[5],
++            ) {
++                eprintln!("Error during restore-u16-gmap32: {}", e);
++                std::process::exit(1);
++            }
++        }
++
+         "reindex-u16-gmap24-to-u24" => {
+             if args.len() != 5 {
+                 print_usage();
+diff --git a/src/process.rs b/src/process.rs
+index b04717a..535a1a4 100644
+--- a/src/process.rs
++++ b/src/process.rs
+@@ -914,6 +914,69 @@ fn encode_u16_auto_str_to_dirs(
+     })
+ }
+ 
++/// Return the nearest UTF-8 character boundary at or before `pos`.
++///
++/// The previous parallel implementation used `str::is_char_boundary()` over
++/// one whole-file String. This performs the same boundary decision without
++/// retaining the complete input in memory.
++fn utf8_boundary_at_or_before(
++    input_file: &str,
++    mut pos: u64,
++    len: u64,
++) -> Result<u64> {
++    use std::io::{Read, Seek, SeekFrom};
++
++    if pos == 0 || pos >= len {
++        return Ok(pos.min(len));
++    }
++
++    let mut f = fs::File::open(input_file)?;
++    let mut one = [0u8; 1];
++
++    loop {
++        f.seek(SeekFrom::Start(pos))?;
++        f.read_exact(&mut one)?;
++
++        // UTF-8 continuation bytes have the form 10xxxxxx.
++        if (one[0] & 0b1100_0000) != 0b1000_0000 {
++            return Ok(pos);
++        }
++
++        if pos == 0 {
++            return Ok(0);
++        }
++
++        pos -= 1;
++    }
++}
++
++/// Read exactly one scheduler range and validate it as UTF-8.
++///
++/// Memory is proportional to the active worker ranges instead of total input
++/// length.
++fn read_utf8_range(
++    input_file: &str,
++    start: u64,
++    end: u64,
++) -> Result<String> {
++    use std::io::{Read, Seek, SeekFrom};
++
++    let mut f = fs::File::open(input_file)?;
++    f.seek(SeekFrom::Start(start))?;
++
++    let n = usize::try_from(end - start)?;
++    let mut bytes = vec![0u8; n];
++    f.read_exact(&mut bytes)?;
++
++    String::from_utf8(bytes)
++        .map_err(|e| anyhow::anyhow!(
++            "invalid UTF-8 in input range {}..{}: {}",
++            start,
++            end,
++            e
++        ))
++}
++
+ /// Parallel macrochunk encoder.
+ /// 
+ /// Usage intent:
+@@ -943,20 +1006,27 @@ pub fn transform_chunked_u16_auto_nosdict_parallel(
+     let macro_mb = if macro_mb == 0 { 100 } else { macro_mb };
+     let macro_size = macro_mb * 1024 * 1024;
+ 
+-    let input = fs::read_to_string(input_file)?;
+-    let len = input.len();
++    let len = fs::metadata(input_file)?.len();
++    let macro_size = macro_size as u64;
++
++    let mut ranges: Vec<(u64, u64)> = Vec::new();
++    let mut start = 0u64;
+ 
+-    let mut ranges: Vec<(usize, usize)> = Vec::new();
+-    let mut start = 0usize;
+     while start < len {
+-        let mut end = (start + macro_size).min(len);
+-        while end > start && !input.is_char_boundary(end) {
+-            end -= 1;
+-        }
+-        if end == start {
+-            // Extremely defensive fallback for pathological boundary cases.
+-            end = len;
++        let nominal_end = (start + macro_size).min(len);
++
++        let mut end = if nominal_end == len {
++            len
++        } else {
++            utf8_boundary_at_or_before(input_file, nominal_end, len)?
++        };
++
++        if end <= start {
++            // Defensive fallback. Valid UTF-8 should require at most three
++            // bytes of boundary adjustment.
++            end = nominal_end;
+         }
++
+         ranges.push((start, end));
+         start = end;
+     }
+@@ -986,7 +1056,15 @@ pub fn transform_chunked_u16_auto_nosdict_parallel(
+                 let macro_root = tmp_root.join(format!("macro_{:03}", macro_idx));
+                 let macro_dict = macro_root.join("dict");
+                 let macro_enc = macro_root.join("enc");
+-                encode_u16_auto_str_to_dirs(macro_idx, &input[s..e], &macro_dict, &macro_enc)
++
++                let macro_input = read_utf8_range(input_file, s, e)?;
++
++                encode_u16_auto_str_to_dirs(
++                    macro_idx,
++                    &macro_input,
++                    &macro_dict,
++                    &macro_enc,
++                )
+             })
+             .collect()
+     });
+@@ -1373,3 +1451,184 @@ pub fn restore_global_u24(
+     out_w.flush()?;
+     Ok(())
+ }
++
++
++////////////////////////////////////////////////////////////////////////////////
++// GANYMEDE: U32 GLOBAL MAP
++////////////////////////////////////////////////////////////////////////////////
++
++/// Build per-chunk local_id -> global_id maps as native u32le.
++///
++/// Output:
++///   `{gmap_dir}/chunk_{:03}.gmap32`
++///
++/// Local structural streams remain u16. Only the canonical global mapping
++/// widens when the merged vocabulary exceeds the u24 ID space.
++pub fn build_gmap32(
++    chunked_dict_dir: &str,
++    merged_dict_file: &str,
++    gmap_dir: &str,
++) -> Result<()> {
++    create_dir_all(gmap_dir)?;
++
++    let global = load_merged_dict_map(merged_dict_file)?;
++
++    let mut paths: Vec<PathBuf> = read_dir(chunked_dict_dir)?
++        .filter_map(|e| e.ok().map(|e| e.path()))
++        .filter(|path| {
++            path.file_name()
++                .and_then(|n| n.to_str())
++                .map(|fname| fname.starts_with("chunk_") && fname.ends_with(".dict"))
++                .unwrap_or(false)
++        })
++        .collect();
++
++    paths.sort();
++
++    for path in paths {
++        let fname = path
++            .file_name()
++            .and_then(|n| n.to_str())
++            .ok_or_else(|| anyhow::anyhow!("bad dict filename"))?;
++
++        let idx: usize =
++            fname["chunk_".len()..fname.len() - ".dict".len()].parse()?;
++
++        let content = fs::read_to_string(&path)?;
++
++        let out_path =
++            Path::new(gmap_dir).join(format!("chunk_{:03}.gmap32", idx));
++
++        let mut out =
++            BufWriter::with_capacity(WRITE_BUF_SIZE, File::create(&out_path)?);
++
++        let mut count = 0usize;
++
++        for tok in content.lines() {
++            let gid = global
++                .get(tok)
++                .copied()
++                .ok_or_else(|| anyhow::anyhow!(
++                    "token not found in merged dict: {:?}",
++                    tok
++                ))?;
++
++            let gid32 = u32::try_from(gid)
++                .map_err(|_| anyhow::anyhow!(
++                    "global id {} exceeds u32",
++                    gid
++                ))?;
++
++            out.write_all(&gid32.to_le_bytes())?;
++            count += 1;
++        }
++
++        out.flush()?;
++
++        redumb_log!(
++            "gmap32 chunk_{:03} local_vocab={} bytes={}",
++            idx,
++            count,
++            count * 4
++        );
++    }
++
++    Ok(())
++}
++
++fn load_gmap32(gmap_file: &Path) -> Result<Vec<u32>> {
++    let bytes = fs::read(gmap_file)?;
++
++    if bytes.len() % 4 != 0 {
++        bail!(
++            "gmap32 file {:?} length is not multiple of 4",
++            gmap_file
++        );
++    }
++
++    let mut map = Vec::with_capacity(bytes.len() / 4);
++
++    for quad in bytes.chunks_exact(4) {
++        map.push(u32::from_le_bytes([
++            quad[0],
++            quad[1],
++            quad[2],
++            quad[3],
++        ]));
++    }
++
++    Ok(map)
++}
++
++/// Restore local u16 streams through a u32 local-to-global map.
++pub fn restore_chunked_u16_gmap32(
++    merged_dict_file: &str,
++    gmap_dir: &str,
++    encoded_dir: &str,
++    output_file: &str,
++) -> Result<()> {
++    let global_toks = load_merged_dict_vec(merged_dict_file)?;
++    let chunks = collect_chunk_indices_by_ext(encoded_dir, "u16")?;
++
++    let mut out_w =
++        BufWriter::with_capacity(WRITE_BUF_SIZE, File::create(output_file)?);
++
++    for idx in chunks {
++        let gmap_path =
++            Path::new(gmap_dir).join(format!("chunk_{:03}.gmap32", idx));
++
++        let local_to_global = load_gmap32(&gmap_path)?;
++
++        let enc_path =
++            Path::new(encoded_dir).join(format!("chunk_{:03}.u16", idx));
++
++        let enc_bytes = fs::read(&enc_path)?;
++
++        if enc_bytes.len() % 2 != 0 {
++            bail!(
++                "u16 encoded file {:?} length is not multiple of 2",
++                enc_path
++            );
++        }
++
++        let mut chunk_buf = String::new();
++        let mut id_count = 0usize;
++
++        for pair in enc_bytes.chunks_exact(2) {
++            let local_id =
++                u16::from_le_bytes([pair[0], pair[1]]) as usize;
++
++            let global_id = *local_to_global
++                .get(local_id)
++                .ok_or_else(|| anyhow::anyhow!(
++                    "local id {} out of gmap32 range in chunk {}",
++                    local_id,
++                    idx
++                ))? as usize;
++
++            let tok = global_toks
++                .get(global_id)
++                .ok_or_else(|| anyhow::anyhow!(
++                    "global id {} out of merged dict range",
++                    global_id
++                ))?;
++
++            chunk_buf.push_str(tok);
++            id_count += 1;
++        }
++
++        write_restored_chunk_to_output(&mut out_w, &chunk_buf)?;
++
++        redumb_log!(
++            "restore chunk_{:03} u16+gmap32 ids={} local_vocab={} global_vocab={}",
++            idx,
++            id_count,
++            local_to_global.len(),
++            global_toks.len()
++        );
++    }
++
++    out_w.flush()?;
++    Ok(())
++}
++
