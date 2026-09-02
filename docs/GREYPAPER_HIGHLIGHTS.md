@@ -214,3 +214,51 @@ enwik9:
 The larger corpus increases the share of lexical types excluded by singleton
 pruning while decreasing the fraction of token positions that take the
 exception path.
+
+## Memory bound versus representation bound
+
+The u16 vocabulary ceiling is currently a bound on each local representation
+space, not a claim that the present encoder has constant process memory.
+
+On the 1 GB run:
+
+```text
+parallel DU encode peak RSS    ~2.87 GiB
+DU statistics peak RSS          ~43 MiB
+R1 planning peak RSS           ~209 MiB
+fused R1 scan peak RSS          ~95 MiB
+```
+
+The dominant memory target is therefore the current parallel DUMBer front end,
+not the singleton reducer.
+
+Future streaming work should distinguish:
+
+```text
+representation-state bound
+scheduler working-set bound
+scanner unresolved-input bound
+whole-process RSS
+```
+
+A bounded local vocabulary alone does not prove all four.
+
+## Release boundary
+
+The distributed Redumb/DUMBer ELF is the exact executable used for the
+published receipts.
+
+This pre-alpha publishes it as a measured reference binary.
+
+Before a v0.1-style release, one of the following should hold:
+
+```text
+A. pinned source -> rebuilt binary -> behavioral/conformance receipt
+
+or
+
+B. source release with the historical reference ELF clearly separated
+```
+
+The current pre-alpha does not claim byte-reproducible source-to-ELF
+provenance.

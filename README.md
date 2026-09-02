@@ -1,4 +1,4 @@
-# DUMBer v3 pre-alpha
+# DUMBer v3 pre-alpha3
 
 **Parallel reversible structural tokenization with bounded local vocabularies.**
 
@@ -30,6 +30,34 @@ using 16 CPU threads.
 ```text
 scheduler shard != representation chunk != downstream payload chunk
 ```
+
+<!-- ENWIK9_HERO_BEGIN -->
+## 1 GB result
+
+On a 1 GB input, DUMBer encoded the local vocabulary-bounded token stream in
+**4.46 s** and reached a globally reconciled DU identity space in **11.54 s**
+on 16 worker threads, restoring the original text exactly.
+
+| metric | result |
+|---|---:|
+| input | 1,000,000,000 bytes |
+| DU encode | **4.46 s** |
+| DU throughput | **224.2 MB/s** |
+| global DU mapping ready | **11.54 s** |
+| exact structural restore | **7.72 s / PASS** |
+| representation chunks | 188 |
+| u16 vocabulary rollovers | 156 |
+| peak RSS | ~2.87 GiB |
+
+The global vocabulary contained **2,229,308 types**. Of these,
+**1,380,346 (61.92%)** were global singletons while representing only
+**0.343% of token positions**.
+
+The complete reproducibility harness took 26.19 s. This number includes
+helper compilation, encode, merge, mapping, exact restore, statistics, R1
+planning, fused scanning, and harness overhead; it is not an encode or decode
+latency measurement.
+<!-- ENWIK9_HERO_END -->
 
 ## R1 singleton projection
 
