@@ -406,3 +406,76 @@ required by `restore-u16-gmap32` after `merged.dict` and `gmap32/` exist.
 
 The full working-artifact accounting of 9,331,707,448 bytes should therefore
 not be confused with the retained canonical representation.
+
+## 10 GB Ganymede + zstd1 Pareto point
+
+The retained canonical representation was also passed through zstd level 1.
+
+| representation | bytes | fraction of 10 GB source | measured wall |
+|---|---:|---:|---:|
+| raw source | 10,000,000,000 | 100.000% | — |
+| Ganymede canonical, pre-entropy | **8,297,899,436** | **82.979%** | raw→canonical: **240.48 s*** |
+| raw + zstd1 | **3,482,115,937** | **34.821%** | **23.16 s†** |
+| Ganymede canonical + zstd1 | **3,280,838,574** | **32.808%** | **324.13 s†** |
+
+Ganymede + zstd1 is **201,277,363 bytes (5.780%) smaller** than applying
+zstd1 directly to the raw source.
+
+Relative to the original 10 GB source, the resulting artifact is
+**32.808% of source size**, or a **67.192% reduction**.
+
+The zstd1 artifact is 39.538% of the 8,297,899,436-byte canonical structural
+representation.
+
+### Timing context
+
+`*` The measured 10 GB raw-to-canonical path was:
+
+```text
+DU encode       102.80 s
+merge dicts      90.41 s
+build gmap32     47.27 s
+                --------
+total           240.48 s
+```
+
+This initial DU encode used the historical whole-file front end on the
+external Transcend volume; it is a scale/conformance measurement, not an
+Europa bounded-input performance result.
+
+At exactly linear scaling, 240.48 seconds per 10 GB corresponds to
+approximately **40.08 minutes per 100 GB**. This is an extrapolation, not a
+measured 100 GB benchmark.
+
+`†` The zstd wall times are not directly storage-fair. Raw zstd1 processed
+10 GB in 23.16 s at 182% CPU, corresponding to an effective source-read rate
+well above the previously measured physical-disk sequential rate. The source
+was therefore substantially served from cache. The canonical tar+zstd1 run
+used only 19% CPU and spent 324.13 s reading thousands of structural files
+from the external volume.
+
+The compressed **byte-size comparison remains valid**. Timing Pareto
+measurements require controlled cache state or an SSD-backed rerun.
+
+### Next Pareto measurements
+
+1. Cold-cache raw vs canonical zstd on the same SSD.
+2. Parallel compression of independently addressable structural chunks.
+3. Separate throughput accounting for structural transform and entropy
+   backend.
+4. Preserve independently decompressible chunks for parallel restore and
+   random access.
+5. Repeat at larger scale after Europa/Io working-set reductions.
+
+A natural parallel backend is:
+
+```text
+local structural chunks
+    ├── worker 0 -> entropy frame
+    ├── worker 1 -> entropy frame
+    ├── worker 2 -> entropy frame
+    └── ...
+```
+
+This trades some cross-chunk entropy context for parallel encode/decode,
+bounded working sets, random access and scheduler-level scalability.

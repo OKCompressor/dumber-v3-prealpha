@@ -191,3 +191,21 @@ The measured 10 GB construction path used the historical whole-file front end
 for its initial DU pass, so its raw-to-canonical wall time is retained as a
 scale/conformance result rather than an Europa bounded-input performance
 claim.
+
+### Structural + entropy result at 10 GB
+
+| path | retained bytes |
+|---|---:|
+| raw | 10,000,000,000 |
+| Ganymede canonical | **8,297,899,436** |
+| raw + zstd1 | **3,482,115,937** |
+| Ganymede + zstd1 | **3,280,838,574** |
+
+At this scale, structural transformation reduces the source by **17.021%**
+before entropy coding. After zstd1, the structural-first artifact is
+**5.780% smaller than raw+zstd1**.
+
+The current wall-time comparison is not used as a codec throughput claim:
+the raw zstd input was substantially cache-served, while the structural
+artifact was read from thousands of files on an external mechanical volume.
+An SSD-backed, chunk-parallel Pareto run is planned.

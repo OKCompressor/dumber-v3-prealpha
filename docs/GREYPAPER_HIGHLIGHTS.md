@@ -302,3 +302,27 @@ This is **17.021% below the 10,000,000,000-byte source before entropy coding**.
 
 The additional 1,033,808,012 bytes of local dictionaries are construction
 state and can be discarded after the canonical map has been built.
+
+## 10 GB: structural transform before entropy coding
+
+At the measured 10 GB scale point:
+
+| representation | bytes |
+|---|---:|
+| raw | 10,000,000,000 |
+| canonical Ganymede | **8,297,899,436** |
+| raw + zstd1 | **3,482,115,937** |
+| Ganymede + zstd1 | **3,280,838,574** |
+
+The canonical representation is **17.021% smaller than raw before entropy
+coding**.
+
+After zstd1, the structural-first representation remains **201,277,363 bytes,
+or 5.780%, smaller** than raw+zstd1.
+
+The current zstd timing comparison is intentionally not treated as a
+throughput result because the raw source was substantially cache-served while
+the canonical artifact was read as thousands of files from an external
+mechanical volume.
+
+The next performance comparison is SSD-backed and chunk-parallel.
