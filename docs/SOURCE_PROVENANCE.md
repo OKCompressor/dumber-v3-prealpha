@@ -54,3 +54,32 @@ The current statement is therefore **behavioral/artifact conformance**, not
 bit-reproducible binary provenance.
 
 See `receipts/source-conformance/`.
+
+## Interpretation of the recovered-source test
+
+The reference executable and fresh rebuild are not byte-identical executables.
+
+However, on the tested path both implementations:
+
+```text
+expose identical CLI help
+restore the fixture exactly
+produce identical merged dictionary
+produce identical tested DU/gmap artifacts
+```
+
+This strongly supports behavioral equivalence of the recovered implementation
+for the tested functionality.
+
+It does not prove that the historical reference ELF was compiled with the same
+compiler, linker, flags, dependency build, or packaging environment.
+
+The recovered worktree was marked dirty because it contains staged and
+untracked historical research material.
+
+The exact filesystem snapshot used for conformance has therefore been
+preserved separately with a complete file-hash manifest.
+
+The source snapshot, rather than a Git patch alone, is the authoritative
+preservation object because untracked files are not represented by
+`git diff HEAD`.

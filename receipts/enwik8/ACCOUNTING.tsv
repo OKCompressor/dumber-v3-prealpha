@@ -1,0 +1,8 @@
+metric	bytes
+input	100000000
+local_dicts	11330612
+local_u16	78387360
+merged_dict	3812931
+gmap24	4102107
+global_u24	117581040
+dict_chunks	31

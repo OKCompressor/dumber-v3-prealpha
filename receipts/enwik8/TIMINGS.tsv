@@ -1,0 +1,7 @@
+stage	seconds
+du_encode	0.650681
+merge_dicts	0.211210
+build_gmap24	0.361544
+restore_gmap	0.997115
+reindex_global_u24	0.401617
+restore_global_u24	0.921565

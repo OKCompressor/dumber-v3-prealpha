@@ -265,3 +265,60 @@ chunk N+1.
 
 Therefore contextual statistics can also be reduced without materializing a
 global-width token stream.
+
+## Current parallel front-end memory boundary
+
+The recovered v0.3 parallel implementation currently begins with:
+
+```rust
+let input = fs::read_to_string(input_file)?;
+```
+
+It then builds macrochunk byte ranges over that in-memory `String` and feeds
+those ranges to the Rayon worker pool.
+
+Consequently, the current implementation has two different kinds of bounds:
+
+```text
+local vocabulary space:
+    bounded to u16
+
+whole-process input working set:
+    not yet bounded independently of corpus size
+```
+
+Measured enwik9 behavior:
+
+```text
+input size               1,000,000,000 bytes
+parallel DU peak RSS     ~2.87 GiB
+```
+
+By comparison:
+
+```text
+DU stats peak RSS        ~43 MiB
+R1 plan peak RSS         ~209 MiB
+fused R1 scan peak RSS   ~95 MiB
+```
+
+The principal memory-optimization target is therefore the current parallel
+front end.
+
+### Planned bounded-working-set path
+
+Replace whole-file `read_to_string` with bounded file/mmap ranges:
+
+```text
+file
+  |
+  +--> scheduler range A --> worker --> DU chunks --> release input window
+  +--> scheduler range B --> worker --> DU chunks --> release input window
+  +--> scheduler range C --> worker --> DU chunks --> release input window
+```
+
+Representation chunk boundaries remain vocabulary-driven and independent of
+scheduler input windows.
+
+This is also the preferred architecture for large datasets and slow external
+storage because it avoids retaining the complete source corpus in memory.
