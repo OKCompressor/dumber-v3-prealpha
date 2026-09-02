@@ -1,0 +1,10 @@
+metric	bytes_or_count
+input	1000000000
+local_dicts	95280910
+local_u16	805981206
+merged_dict	20856995
+gmap24	34537734
+r1_vocab	7473916
+fused_output_dir	17530222
+representation_chunks	188
+rollovers	156
