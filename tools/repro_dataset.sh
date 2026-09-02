@@ -21,7 +21,9 @@ if [ "$MACRO_MB" -lt 1 ]; then
 fi
 
 STAMP="$(date +%Y%m%d-%H%M%S)"
-RUN="$REL/_runs/${NAME}-${STAMP}"
+RUN_ROOT="${RUN_ROOT:-$REL/_runs}"
+mkdir -p "$RUN_ROOT"
+RUN="$RUN_ROOT/${NAME}-${STAMP}"
 LOG="$RUN/logs"
 
 mkdir -p "$RUN"/{local_dicts,local_u16,gmap24,du_stats,r1_plan,fused} "$LOG"
@@ -78,6 +80,21 @@ run_stage merge_dicts \
     "$REDUMB" merge-dicts \
     "$RUN/local_dicts" \
     "$RUN/merged.dict"
+
+GLOBAL_VOCAB="$(python3 - "$RUN/merged.dict" <<'PY2'
+import sys
+with open(sys.argv[1], "rb") as f:
+    print(sum(1 for _ in f))
+PY2
+)"
+
+echo "global_vocab=$GLOBAL_VOCAB" | tee -a "$RUN/ENVIRONMENT.txt"
+
+if [ "$GLOBAL_VOCAB" -ge 16777216 ]; then
+    echo "ERROR: global vocabulary exceeds u24: $GLOBAL_VOCAB" >&2
+    echo "requires_gmap32=1" | tee -a "$RUN/ENVIRONMENT.txt"
+    exit 24
+fi
 
 run_stage build_gmap24 \
     "$REDUMB" build-gmap24 \
