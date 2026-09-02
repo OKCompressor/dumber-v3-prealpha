@@ -15,11 +15,13 @@ language-model token bridges, NLP, graphs, and downstream rank coding.
 |---|---:|---:|---:|---|
 | enwik7 | 10 MB | **0.106 s** | **0.219 s** | PASS |
 | enwik8 | 100 MB | **0.651 s** | **1.223 s** | PASS |
+| enwik9 | 1 GB | **4.46 s** | **11.54 s** | PASS |
 
-enwik8 DU encode throughput:
+Measured parallel DU throughput:
 
 ```text
-~153.7 MB/s
+enwik8   ~153.7 MB/s
+enwik9   ~224.2 MB/s
 ```
 
 The 100 MB run produced 31 vocabulary-bounded representation chunks while

@@ -8,13 +8,13 @@
 | macro size | 30 MiB |
 | representation chunks | 188 |
 | u16 rollovers | 156 |
-| DU encode | **4.240 s** |
-| DU throughput | **235.8 MB/s** |
-| global DU mapping ready | **10.650 s** |
-| DU stats | 0.950 s |
-| R1 plan | 1.090 s |
-| fused R1 scan | 1.140 s |
-| DU encode max RSS | 2916.6 MiB |
+| DU encode | **4.460 s** |
+| DU throughput | **224.2 MB/s** |
+| global DU mapping ready | **11.540 s** |
+| DU stats | 1.070 s |
+| R1 plan | 1.100 s |
+| fused R1 scan | 1.190 s |
+| DU encode max RSS | 2936.3 MiB |
 | DU stats max RSS | 42.9 MiB |
 
 ## Vocabulary

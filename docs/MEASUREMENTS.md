@@ -138,13 +138,13 @@ it is not yet an end-to-end parallel zRank result.
 | macro size | 30 MiB |
 | representation chunks | 188 |
 | u16 rollovers | 156 |
-| DU encode | **4.240 s** |
-| DU throughput | **235.8 MB/s** |
-| global DU mapping ready | **10.650 s** |
-| DU stats | 0.950 s |
-| R1 plan | 1.090 s |
-| fused R1 scan | 1.140 s |
-| DU encode max RSS | 2916.6 MiB |
+| DU encode | **4.460 s** |
+| DU throughput | **224.2 MB/s** |
+| global DU mapping ready | **11.540 s** |
+| DU stats | 1.070 s |
+| R1 plan | 1.100 s |
+| fused R1 scan | 1.190 s |
+| DU encode max RSS | 2936.3 MiB |
 | DU stats max RSS | 42.9 MiB |
 
 ## Vocabulary
@@ -176,3 +176,81 @@ restore_gmap_exact=PASS
 The global-u24 token stream is intentionally not materialized in this run.
 
 <!-- ENWIK9_END -->
+
+
+<!-- FINAL_ENWIK9_BEGIN -->
+## enwik9 — 1 GB full DU/R1 receipt
+
+Input:
+
+```text
+1,000,000,000 bytes
+SHA256=159b85351e5f76e60cbe32e04c677847a9ecba3adc79addab6f4c6c7aa3744bc
+threads=16
+scheduler target tasks=32
+macro size=30 MiB
+```
+
+### Timing
+
+| stage | wall | max RSS |
+|---|---:|---:|
+| parallel DU encode | **4.46 s** | **2,936 MiB** |
+| merge dictionaries | 2.93 s | 200 MiB |
+| build gmap24 | 4.15 s | 254 MiB |
+| **global DU mapping ready** | **11.54 s** | — |
+| exact restore through gmap | 7.72 s | 259 MiB |
+| DU unigram stats | 1.07 s | 42.9 MiB |
+| R1 t1/words plan | 1.10 s | 209 MiB |
+| fused R1 scan | 1.19 s | 95.2 MiB |
+| **full measured trip** | **26.19 s** | **2,936 MiB peak** |
+
+Exactness:
+
+```text
+restore_gmap_exact=PASS
+```
+
+Parallel DU throughput:
+
+```text
+~224.2 MB/s
+```
+
+### Structural topology
+
+| metric | value |
+|---|---:|
+| scheduler target tasks | 32 |
+| representation chunks | **188** |
+| u16 vocabulary rollovers | **156** |
+
+This reinforces that execution sharding and representation boundaries are
+independent.
+
+### Vocabulary / R1 projection
+
+| metric | value |
+|---|---:|
+| global DU types | 2,229,308 |
+| singleton types | **1,380,346** |
+| singleton type fraction | **61.92%** |
+| frequent R1 types | **848,962** |
+| singleton token fraction | **0.343%** |
+| literal singleton bytes | 12,002,741 |
+
+The singleton projection removes nearly 62% of the modeled type space while
+diverting approximately 3.4 token positions per thousand.
+
+### Artifact accounting
+
+| artifact | bytes |
+|---|---:|
+| local dictionaries | 95,280,910 |
+| merged DU dictionary | **20,856,995** |
+| gmap24 | 34,537,734 |
+| local u16 payload | 805,981,206 |
+| pruned R1 vocabulary | **7,473,916** |
+
+The full global-u24 corpus representation was deliberately not materialized.
+<!-- FINAL_ENWIK9_END -->

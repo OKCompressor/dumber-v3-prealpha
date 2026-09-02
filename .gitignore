@@ -2,3 +2,6 @@
 /target/
 *.tmp
 *.log
+/receipts/*.pid
+/receipts/LATEST_*
+/receipts/*-full-*/

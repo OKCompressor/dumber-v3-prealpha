@@ -147,3 +147,33 @@ addition.
 
 This allows later chunks to use richer global state without rewriting earlier
 payloads.
+
+## 1 GB scaling result
+
+A 1 GB enwik9 run using 16 worker threads and approximately 32 scheduling
+regions produced:
+
+```text
+DU encode                4.46 s
+DU throughput          ~224.2 MB/s
+global mapping ready    11.54 s
+full measured trip      26.19 s
+exact restore            PASS
+
+representation chunks      188
+u16 rollovers               156
+```
+
+The same run produced 2,229,308 globally unique DU types.
+
+Rare1 singleton projection identified:
+
+```text
+1,380,346 singleton types = 61.92% of type space
+0.343% of token positions
+848,962 remaining frequent types
+```
+
+Thus vocabulary growth with corpus size strengthens the motivation for
+singleton pruning: a majority of lexical types can be excluded from the main
+contextual model while affecting only a small fraction of token positions.

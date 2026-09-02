@@ -204,3 +204,64 @@ An expansion/reordering transform may require its resulting stream to be
 materialized or separately summarized.
 
 This is scheduler metadata, not a restriction on future transforms.
+
+## What `du_stats_reduce.rs` actually does
+
+The reducer does not create a global-width copy of the corpus.
+
+For each representation chunk it reads:
+
+```text
+local u16 token stream
++
+local-to-global packed gmap24
+```
+
+The packed map is hydrated into native u32 values in memory.
+
+For every local token ID:
+
+```text
+local_id
+    |
+    v
+gmap[local_id]
+    |
+    v
+global_DU_id
+    |
+    +--> global_count[global_DU_id] += 1
+```
+
+It also records the first and last global IDs of each chunk.
+
+The resulting state is sufficient for the current Rare1 singleton decision:
+
+```text
+count == 1  -> singleton
+count > 1   -> frequent
+```
+
+No `global_u24` corpus stream is written.
+
+### Current boundary
+
+The reducer currently computes unigram counts.
+
+It does not yet compute zRank-v7 contextual adjacent-pair counts.
+
+The next contextual reducer extends the same scan:
+
+```text
+previous_global_R1_id
++
+current_global_R1_id
+    ->
+context_pair_count++
+```
+
+Chunk boundaries require only the recorded last ID of chunk N and first ID of
+chunk N+1.
+
+Therefore contextual statistics can also be reduced without materializing a
+global-width token stream.
