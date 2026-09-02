@@ -27,3 +27,30 @@ source-to-binary provenance.
 A later conformance step should rebuild the candidate Rust source in an
 isolated target directory and compare CLI behavior, exact restoration,
 artifact structure, and benchmark receipts against the distributed ELF.
+
+## Recovered source conformance — 2026-09-02
+
+The recovered Rust source was rebuilt from the worktree identified as:
+
+```text
+75c89feb7090e0debc4413b0b242e93d9b35c955
+v0.4-preview-local-8-g75c89fe-dirty
+crate version: redumb 0.3.0
+```
+
+The fresh executable is not byte-identical to the distributed reference ELF.
+
+However, the tested implementation path produced:
+
+```text
+CLI help equality             PASS
+reference exact restore       PASS
+rebuilt exact restore         PASS
+merged dictionary equality    PASS
+fixture artifact equality     PASS
+```
+
+The current statement is therefore **behavioral/artifact conformance**, not
+bit-reproducible binary provenance.
+
+See `receipts/source-conformance/`.

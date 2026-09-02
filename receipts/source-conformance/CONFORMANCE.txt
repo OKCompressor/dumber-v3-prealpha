@@ -1,0 +1,5 @@
+help_exact=PASS
+ref_restore_exact=PASS
+rebuilt_restore_exact=PASS
+merged_dict_exact=PASS
+fixture_artifacts_exact=PASS

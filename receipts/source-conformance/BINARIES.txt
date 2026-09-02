@@ -1,0 +1,9 @@
+REFERENCE:
+/mnt/data_linux/IT/OKC-releases/dumber-v3-prealpha/dist/redumb-linux-x86_64: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=ed8866f15efd43714c3ea324438fb2a2dd582357, for GNU/Linux 3.2.0, stripped
+b342ab57b059957a2b3035d3d842de5d86a7c271c14a8b30bdcd22054badc76c  /mnt/data_linux/IT/OKC-releases/dumber-v3-prealpha/dist/redumb-linux-x86_64
+    Build ID: ed8866f15efd43714c3ea324438fb2a2dd582357
+
+REBUILT:
+/mnt/data_linux/IT/OKC-releases/dumber-v3-prealpha/receipts/source-conformance-20260902-230023/target/release/redumb: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=3b58397f7e80ae8eefb107be4f9c5a82f5ce2b78, for GNU/Linux 3.2.0, stripped
+371f3dc910f73252044f0b2a0a4cc6fb0a436e2c175ee7932237388cdd2431e5  /mnt/data_linux/IT/OKC-releases/dumber-v3-prealpha/receipts/source-conformance-20260902-230023/target/release/redumb
+    Build ID: 3b58397f7e80ae8eefb107be4f9c5a82f5ce2b78

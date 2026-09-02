@@ -1,0 +1,15 @@
+Usage:
+  redumb encode <input_file> <dict_dir> <sorted_dict_dir> <encoded_dir>
+  redumb restore <dict_dir> <encoded_dir> <output_file>
+  redumb encode-u32 <input_file> <dict_dir> <sorted_dict_dir> <encoded_dir>
+  redumb encode-u32-nosdict <input_file> <dict_dir> <encoded_dir>
+  redumb restore-u32 <dict_dir> <encoded_dir> <output_file>
+  redumb encode-u16-auto <input_file> <dict_dir> <sorted_dict_dir> <encoded_dir>
+  redumb encode-u16-auto-nosdict <input_file> <dict_dir> <encoded_dir>
+  redumb encode-u16-auto-nosdict-par <input_file> <dict_dir> <encoded_dir> [threads] [macro_mb]
+  redumb restore-u16 <dict_dir> <encoded_dir> <output_file>
+  redumb build-gmap24 <chunked_dict_dir> <merged_dict_file> <gmap_dir>
+  redumb restore-u16-gmap24 <merged_dict_file> <gmap_dir> <encoded_u16_dir> <output_file>
+  redumb reindex-u16-gmap24-to-u24 <gmap_dir> <encoded_u16_dir> <global_u24_dir>
+  redumb restore-global-u24 <merged_dict_file> <global_u24_dir> <output_file>
+  redumb merge-dicts <chunked_dict_dir> <output_dict_file>
