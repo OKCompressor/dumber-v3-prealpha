@@ -1,0 +1,149 @@
+# DUMBer v3 pre-alpha — grey-paper highlights
+
+## Parallel reversible structural tokenization
+
+DUMBer maps text into vocabulary-bounded local u16 token streams.
+
+Local representation spaces can be reconciled into a canonical global
+vocabulary without materializing the entire corpus as global-width IDs.
+
+### Measured enwik7 — 10 MB
+
+| metric | result |
+|---|---:|
+| parallel DU encode | **0.105719 s** |
+| global DU mapping ready | **0.218985 s** |
+| exact restore | **PASS** |
+
+### Measured enwik8 — 100 MB
+
+| metric | result |
+|---|---:|
+| threads | 16 |
+| parallel DU encode | **0.650681 s** |
+| throughput | **~153.7 MB/s** |
+| global DU mapping ready | **1.223435 s** |
+| representation chunks | **31** |
+| exact restore | **PASS** |
+
+Approximately sixteen scheduling regions produced thirty-one representation
+chunks because local u16 vocabularies can roll independently.
+
+Therefore:
+
+```text
+scheduler shard
+!= representation chunk
+!= downstream zRank payload chunk
+```
+
+Processor count is an execution parameter rather than a file-format
+parameter.
+
+## Vocabulary reconciliation
+
+### enwik8
+
+| artifact | bytes |
+|---|---:|
+| local dictionaries | 11,330,612 |
+| merged dictionary | **3,812,931** |
+| packed gmap24 | 4,102,107 |
+| merged dictionary + gmap | **7,915,038** |
+
+The merged dictionary removes approximately 66.35% of duplicate local
+dictionary bytes.
+
+The merged dictionary plus packed map remains approximately 30.14% below the
+collection of local dictionaries.
+
+## Width policy
+
+```text
+u16 = local structural storage
+u24 = compact serialized global mapping
+u32 = hydrated compute / API / vector lane
+```
+
+The complete corpus need not be materialized as global-u24.
+
+## Singleton projection
+
+On enwik8:
+
+| metric | result |
+|---|---:|
+| global DU types | 426,714 |
+| singleton types | **234,696** |
+| singleton share of types | **55.00%** |
+| frequent R1 types | **192,018** |
+| token positions diverted | **0.599%** |
+| DU stats scan | **0.150 s** |
+| R1 plan | **0.330 s** |
+
+The primary R1 candidate is:
+
+```text
+threshold=1
+rare-ones-mode=words
+```
+
+This removes more than half of the modeled symbol types while diverting fewer
+than six token positions per thousand into the lexical singleton path.
+
+## Current structural-compression baseline
+
+enwik8, 100 MB:
+
+| representation | bytes | encode total |
+|---|---:|---:|
+| raw LF + zstd1 | 40,675,947 | **0.095 s** |
+| R1 + zstd1 | 39,642,839 | 5.680 s |
+| zRank + zstd1 | **34,206,369** | 7.845 s |
+
+The current monolithic zRank representation is 15.90% smaller than raw+zstd1
+on this run, but currently pays substantial encode latency.
+
+Parallel DU/reducer work targets that latency.
+
+## Reducer critical path
+
+```text
+DU workers                    ███████████████████
+dictionary reducers             ████████████████
+unigram/context reducers          ██████████████
+R1 singleton planning               ███████████
+zRank model preparation               █████████
+                                         │
+                                   model freeze
+                                         █
+parallel fused emission                 ███
+```
+
+The target is to overlap most structural preparation with the slowest worker
+wave, leaving a small global barrier plus a highly parallel final emission
+pass.
+
+## Batch and streaming model evolution
+
+Batch-global:
+
+```text
+all reducer state
+-> one frozen global model
+-> parallel payload emission
+```
+
+Future stream epochs:
+
+```text
+M0 --Δ1--> M1 --Δ2--> M2
+```
+
+A chunk identifies the frozen model epoch under which it was encoded.
+
+`Δ` denotes a model-state update, not necessarily ordinary numerical
+addition.
+
+This allows later chunks to use richer global state without rewriting earlier
+payloads.

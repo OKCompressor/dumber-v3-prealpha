@@ -1,76 +1,45 @@
-# Redumb / DUMB v3preview alpha
+# DUMBer v3 pre-alpha
 
-A reversible, vocabulary-bounded structural tokenizer and local-ID stream.
+**Parallel reversible structural tokenization with bounded local vocabularies.**
 
-This preview focuses on:
+DUMBer produces vocabulary-bounded local u16 token streams, merges their
+lexical spaces into a canonical global representation, and supports exact
+restoration.
 
-- parallel tokenization
-- u16 local ID spaces
-- vocabulary-driven rollover
-- global dictionary reconciliation
-- exact restoration
-- reproducible throughput / memory measurements
+It is designed as an upstream structural representation for compression,
+language-model token bridges, NLP, graphs, and downstream rank coding.
 
-It is intended as a latency, memory, representation, and downstream-ID
-research artifact.
+## Highlights
 
-It does not claim BPE-equivalent semantics or universal compression superiority.
+| dataset | input | DU encode | global mapping ready | exact |
+|---|---:|---:|---:|---|
+| enwik7 | 10 MB | **0.106 s** | **0.219 s** | PASS |
+| enwik8 | 100 MB | **0.651 s** | **1.223 s** | PASS |
 
-## 100 MB highlight
-
-Measured on enwik8:
-
-| metric | result |
-|---|---:|
-| input | 100,000,000 bytes |
-| threads | 16 |
-| DU encode | **0.650681 s** |
-| throughput | **~153.7 MB/s** |
-| global DU mapping ready | **1.223435 s** |
-| structural chunks | **31** |
-| global vocabulary | 426,714 |
-| exact restore | **PASS** |
-
-Approximately sixteen scheduler-sized input regions produced thirty-one
-representation chunks because local dictionaries may independently reach the
-u16 vocabulary ceiling.
-
-Therefore:
+enwik8 DU encode throughput:
 
 ```text
-scheduler shard != representation chunk != downstream zRank chunk
+~153.7 MB/s
 ```
 
-Processor count is an execution parameter, not a file-format parameter.
-
-## ID-width policy
+The 100 MB run produced 31 vocabulary-bounded representation chunks while
+using 16 CPU threads.
 
 ```text
-local storage:          u16
-compact global maps:    u24
-canonical compute/API:  u32
+scheduler shard != representation chunk != downstream payload chunk
 ```
 
-u24 is useful for compact serialization.
+## R1 singleton projection
 
-u32 is the preferred hydrated representation for arithmetic, SIMD-oriented
-processing, LLM/NLP integration, graph operations, and future larger spaces.
-
-The full token stream should not normally be materialized as global-u24.
-Local u16 streams can instead be mapped while feeding downstream transforms.
-
-## R1 singleton result
-
-On the same 100 MB input:
+enwik8:
 
 | metric | result |
 |---|---:|
 | global DU vocabulary | 426,714 |
-| singleton types | **234,696** |
-| singleton share of types | **55.00%** |
-| frequent types | **192,018** |
-| token positions diverted | **0.599%** |
-| DU counts scan | **0.150 s** |
+| singleton types | **234,696 / 55.00%** |
+| frequent R1 vocabulary | **192,018** |
+| singleton token positions | **0.599%** |
+| DU stats | **0.150 s** |
 | R1 plan | **0.330 s** |
 
 Primary downstream candidate:
@@ -80,24 +49,74 @@ threshold=1
 rare-ones-mode=words
 ```
 
-This reduces the contextual vocabulary from 426,714 symbols to approximately
-192,019 modeled symbols including the sentinel, while lexical singleton
-exceptions bypass that modeled space.
+## ID-width policy
+
+```text
+u16 = local structural storage
+u24 = compact serialized mapping
+u32 = hydrated compute/API/vector lane
+```
+
+A global-u24 corpus stream is not required.
+
+Local u16 streams can be mapped directly into downstream global spaces.
+
+## Structural handoff
+
+```text
+text
+-> local u16 DUMBer streams
+-> canonical DU identity space
+-> optional R1 pruning
+-> zRank / NLP / graph / model bridges
+```
+
+## Model-tokenizer bridge
+
+A target BPE/SentencePiece tokenizer can be applied once to each entry in the
+merged DUMBer vocabulary:
+
+```text
+DU global ID
+-> [target tokenizer IDs...]
+```
+
+On enwik8 the merged vocabulary is only 3.81 MB for a 100 MB source corpus.
+
+See:
+
+```text
+docs/DUMBER_BPE_BRIDGE.md
+```
 
 ## Reproduce
 
+Run from an environment with Rust available:
+
 ```bash
-tools/repro_dataset.sh /path/to/input DATASET 16 2
+tools/repro_dataset.sh /path/to/input DATASET THREADS TASK_MULTIPLIER
 ```
 
-The final argument is scheduling tasks per worker.
-
-For enwik9:
+Example:
 
 ```bash
 tools/repro_dataset.sh \
-  /mnt/data_linux/IT/OKC/enwiks/enwik9 \
-  enwik9 \
+  /mnt/data_linux/IT/OKC/enwiks/enwik8 \
+  enwik8 \
   16 \
   2
 ```
+
+The distributed executable remains named `redumb` internally for provenance
+and CLI compatibility.
+
+## Scope
+
+This preview does not claim:
+
+- BPE-equivalent semantics
+- universal compression superiority
+- byte-reproducible source/binary provenance
+- end-to-end parallel zRank results
+
+Those are separate measurements.
