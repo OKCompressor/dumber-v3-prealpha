@@ -283,3 +283,64 @@ It is **not** entropy-codec decompression time.
 
 No claim should label 26.19 s as simply "decode", "restore", or
 "encode + decode".
+
+## 10 GB vocabulary-width crossover
+
+Dataset:
+
+```text
+enwik10-20251101-prefix
+bytes=10,000,000,000
+sha256=4a11a5ab0740c29fc1097aeafe9691e021238be5a1c1a93ebb8a4e89d85c7b6c
+```
+
+Observed global vocabulary:
+
+```text
+17,294,055 types
+```
+
+Packed u24 capacity:
+
+```text
+16,777,216 IDs
+```
+
+Therefore the measured corpus exceeds the u24 global-ID space by:
+
+```text
+516,839 IDs
+3.08%
+```
+
+This is the first measured DUMBer dataset requiring a u32-capable canonical
+global map.
+
+### Important execution note
+
+This particular 10 GB attempt did **not** use the experimental Europa
+bounded-input binary.
+
+The receipt identifies:
+
+```text
+redumb_sha256=b342ab57b059957a2b3035d3d842de5d86a7c271c14a8b30bdcd22054badc76c
+macro_mb=597
+```
+
+The run therefore exercised the historical whole-file input path.
+
+Observed values:
+
+```text
+DU encode      102.80 s
+peak RSS       23,293,084 KiB
+merge dicts     90.41 s
+global vocab    17,294,055
+```
+
+These numbers are useful as a scale/crossover observation but are not an
+Europa bounded-memory benchmark.
+
+The run stopped deliberately before gmap serialization because the u24 guard
+detected the overflow.

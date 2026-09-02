@@ -3,7 +3,7 @@
 set -euo pipefail
 
 REL="$(cd "$(dirname "$0")/.." && pwd)"
-REDUMB="$REL/dist/redumb-linux-x86_64"
+REDUMB="${REDUMB_OVERRIDE:-$REL/dist/redumb-linux-x86_64}"
 
 INPUT="${1:?input path}"
 NAME="${2:-dataset}"
@@ -65,7 +65,13 @@ rustc -O "$REL/devtools/fused_emit.rs" \
     echo "threads=$THREADS"
     echo "task_multiplier=$TASK_MULT"
     echo "target_scheduler_tasks=$TASKS"
-    echo "macro_mb=$MACRO_MB"
+    # MACRO_MB_OVERRIDE_APPLIED
+if [ -n "${MACRO_MB_OVERRIDE:-}" ]; then
+    MACRO_MB="$MACRO_MB_OVERRIDE"
+    TASKS=$(( (BYTES + MACRO_MB*MIB - 1) / (MACRO_MB*MIB) ))
+fi
+
+echo "macro_mb=$MACRO_MB"
 } | tee "$RUN/ENVIRONMENT.txt"
 
 run_stage du_encode \
