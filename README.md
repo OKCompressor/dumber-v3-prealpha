@@ -209,3 +209,35 @@ The current wall-time comparison is not used as a codec throughput claim:
 the raw zstd input was substantially cache-served, while the structural
 artifact was read from thousands of files on an external mechanical volume.
 An SSD-backed, chunk-parallel Pareto run is planned.
+
+### 10 GB entropy Pareto
+
+At zstd level 1, the Ganymede structural representation produced a
+**3,280,838,574-byte** artifact, **5.780% smaller** than raw+zstd1.
+
+At zstd level 19, raw+zstd19 produced the smaller artifact:
+
+```text
+raw+zstd19          2,321,300,290 B
+Ganymede+zstd19     2,554,960,620 B
+```
+
+The zstd19 entropy stage over Ganymede completed in **505.05 s**, versus
+**853.83 s** over raw input, a **40.85% reduction in measured entropy-stage
+wall time**.
+
+The measured raw-to-canonical construction path was:
+
+```text
+DU encode        102.80 s
+merge             90.41 s
+gmap32             47.27 s
+                 --------
+total             240.48 s
+```
+
+A linear 100 GB projection is approximately **40.08 minutes**. This is not a
+measured 100 GB result. SSD-backed bounded-input scaling remains to be tested.
+
+The 10 GB measurements cover DUMBer canonicalization, not the downstream R1
+or zRank stages.

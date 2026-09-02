@@ -479,3 +479,116 @@ local structural chunks
 
 This trades some cross-chunk entropy context for parallel encode/decode,
 bounded working sets, random access and scheduler-level scalability.
+
+## 10 GB hard-entropy Pareto
+
+The same 10 GB source and retained Ganymede canonical representation were
+measured with zstd level 19.
+
+| path | retained bytes | measured encode/build wall | peak RSS |
+|---|---:|---:|---:|
+| raw source | 10,000,000,000 | — | — |
+| Ganymede canonical | 8,297,899,436 | 240.48 s* | stage-dependent |
+| raw + zstd1 | 3,482,115,937 | 23.16 s† | 36,724 KiB |
+| Ganymede + zstd1 | **3,280,838,574** | 324.13 s† | 32,956 KiB |
+| raw + zstd19 | **2,321,300,290** | 853.83 s | 1,109,104 KiB |
+| Ganymede + zstd19 | 2,554,960,620 | **505.05 s** | 1,204,668 KiB |
+
+At level 1, the structural-first artifact is **201,277,363 bytes (5.780%)
+smaller** than raw+zstd1.
+
+At level 19, raw+zstd19 is **233,660,330 bytes smaller**; the structural-first
+artifact is **10.066% larger** than raw+zstd19.
+
+However, the level-19 entropy stage itself is substantially faster on the
+Ganymede representation:
+
+```text
+raw zstd19          853.83 s
+Ganymede zstd19     505.05 s
+difference         -348.78 s
+wall delta          -40.85%
+```
+
+Both level-19 runs saturated approximately 7-8 CPU cores, making this timing
+comparison substantially cleaner than the level-1 external-disk run.
+
+### Composite measured-stage path
+
+The measured components of raw -> Ganymede -> zstd19 are:
+
+```text
+DU encode           102.80 s
+merge dictionaries   90.41 s
+build gmap32          47.27 s
+zstd19 canonical     505.05 s
+                    --------
+sum                  745.53 s
+```
+
+Raw -> zstd19 measured 853.83 s.
+
+The sum of separately measured structural-first stages is therefore
+**108.30 s (12.68%) lower**, while producing an artifact 10.066% larger.
+
+This is a composite sum of separately measured stages, not a single
+end-to-end timed invocation.
+
+### Decode semantics
+
+The exact Ganymede canonical restore to the original 10 GB source measured:
+
+```text
+wall                 369.62 s
+peak RSS           1,178,196 KiB
+exact restore            PASS
+```
+
+This should be compared with entropy-codec decode time, not entropy encode
+time.
+
+A full compressed-Ganymede decode requires two stages and remains to be
+measured:
+
+```text
+Ganymede.tar.zst
+    -> decompress/extract canonical artifacts
+    -> DUMBer structural restore
+    -> original text
+```
+
+The current 10 GB run does not include R1 or zRank.
+
+### 100 GB scale projection
+
+Measured raw -> canonical construction at 10 GB:
+
+```text
+DU encode            102.80 s
+merge dictionaries    90.41 s
+build gmap32           47.27 s
+                     --------
+total                 240.48 s
+```
+
+Exact linear projection:
+
+```text
+100 GB ~= 2,404.8 s ~= 40.08 min
+```
+
+This is an extrapolation, not a measured 100 GB benchmark.
+
+The measurement used an external mechanical volume and the historical
+whole-file DU front end. The following remain to be tested:
+
+- Europa bounded-input at 10 GB and 100 GB
+- SSD-backed cold-cache throughput
+- actual 100 GB scaling
+- peak RSS under the bounded-input path
+- dictionary-merge scalability
+- auto u24/u32 pipeline selection
+- chunk-parallel entropy coding
+- parallel/random-access restore
+- gmap32 support in R1 and zRank reducers
+

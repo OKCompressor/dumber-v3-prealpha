@@ -326,3 +326,37 @@ the canonical artifact was read as thousands of files from an external
 mechanical volume.
 
 The next performance comparison is SSD-backed and chunk-parallel.
+
+## Entropy-backend Pareto at 10 GB
+
+The 10 GB experiment exposes two different operating points.
+
+```text
+zstd1
+raw                         3,482,115,937 B
+Ganymede structural-first   3,280,838,574 B
+gain                           -5.780%
+
+zstd19
+raw                         2,321,300,290 B
+Ganymede structural-first   2,554,960,620 B
+size cost                     +10.066%
+
+zstd19 wall
+raw                            853.83 s
+Ganymede                       505.05 s
+entropy-stage wall delta       -40.85%
+```
+
+At low entropy effort, the structural transform improves final size. At high
+entropy effort, raw zstd19 achieves the smaller artifact, while zstd19 over
+the structural representation completes substantially faster.
+
+Using the separately measured construction stages, the composite
+raw -> Ganymede -> zstd19 path sums to **745.53 s**, versus **853.83 s** for
+raw -> zstd19, a **12.68% wall advantage** at a **10.066% size cost**.
+
+These are Pareto points rather than a universal compressor-ranking claim.
+
+The current 10 GB result covers DUMBer canonicalization only; R1 and zRank are
+not part of this measurement.
