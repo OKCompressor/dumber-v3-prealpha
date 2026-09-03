@@ -11,3 +11,8 @@
 /receipts/bounded-input-enwik7-20*/
 /receipts/ganymede-enwik7-20*/
 /receipts/ganymede-loaderfix-enwik7-20*/
+
+# Python cache artifacts
+__pycache__/
+*.py[cod]
+devtools/__pycache__/
