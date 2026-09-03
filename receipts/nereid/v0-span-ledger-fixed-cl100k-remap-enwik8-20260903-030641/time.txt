@@ -1,0 +1,1 @@
+wall_s=1.81 max_rss_kb=232864 cpu=98%

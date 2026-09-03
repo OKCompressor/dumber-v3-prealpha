@@ -1,0 +1,21 @@
+{
+  "mode": "Nereid v0 fixed span ledger",
+  "target": "bench-pre-v2 dense cl100k_base used-vocab remap",
+  "claim": "align direct target-remap stream and decoded DU stream by raw byte spans",
+  "not_claimed": "official model IDs or full target tokenizer generation",
+  "bytes_tested": 2000000,
+  "target_vocab_size_used": 71161,
+  "target_tokens_tested": 518791,
+  "du_tokens_covering_prefix": 781080,
+  "target_decode_equals_raw_prefix": true,
+  "du_decode_equals_raw_prefix": true,
+  "target_decode_first_mismatch": null,
+  "du_decode_first_mismatch": null,
+  "target_tokens_exactly_on_du_boundaries": 375821,
+  "target_tokens_cross_or_cut_du_tokens": 142970,
+  "target_tokens_start_inside_du_token": 83560,
+  "target_tokens_end_inside_du_token": 83560,
+  "max_du_tokens_covered_by_one_target_token": 16,
+  "fraction_exact_boundary": 0.724417,
+  "elapsed_s": 1.660061
+}
